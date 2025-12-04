@@ -9,7 +9,7 @@ unions = [
     "тогда", "после", "до", "при этом", "при этом", "где", "куда", "откуда", "куда бы", "ведь", "чем", "при", "будто",
     "хотя", "тем не менее", "один раз", "например", "итак", "следовательно", "однако", "при этом", "соответственно",
     "впрочем", "следом", "потому что", "так что", "иначе", "или", "либо", "или же", "чего бы ни было", "то ли"
-]
+]  # массив из союзов в русском языке, для их определения 
 
 special_characters = ["\0", "\a", "\b", "\t", "\n", "\v", "\f", "\r", "\xa0", "\"", "\'", "\\"
                                                                                           "\x00", "\x01", "\x02",
@@ -24,60 +24,55 @@ special_symbols_list = [
     "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "-", "_", "+", "=",
     "[", "]", "{", "}", "\\", "|", ";", ":", "'", "\"", ",", ".", "?", "/",
     "<", ">", "~", "`", "\n", "\t", " ", "\u00A0", "\u2013", "\u2014", "\u2026", "«", "»"
-]  # еще один список с спец символами, но здесь большинство из них не относятся к спец символам строковых отображений,
-
-
-# так же есть лингвистические
+]  # еще один список с спец символами, но здесь большинство из них не относятся к спец символам строковых отображений, так же есть лингвистические
 
 
 # функции редактирования текста для анализа текста
 
 
-def remove_before_parenthesis(s):
-    if '(' in s:
+def remove_before_parenthesis(s):  # функция, убирающая из начала предложения закрывающие кавычки 
+    if '(' in s:  # проверка на открывающую кавычку 
         return s
-    else:
-        index = s.find(')')
+    else:  
+        index = s.find(')')  # удаление ориентируясь на индекс закрывающей кавычки 
         if index != -1:
             return s[index + 1:]
         else:
             return s
 
 
-def remove_numbers_before_symbols(sentence):
-    c = 0
-    while c < len(sentence) and sentence[c] in '0123456789':
+def remove_numbers_before_symbols(sentence):  # функция убирающая произвольное количество символов из начала предложения перед скобкой (вроде 123)) 
+    c = 0  # счетчик для определения индекс (тк здесь произвольное количество символов перед скобкой) 
+    while c < len(sentence) and sentence[c] in '0123456789':  # цикл идущий до тех пор, пока встречаются цифры
         c += 1
-    if c + 1 < len(sentence) and sentence[c] in '.)':
-        return sentence[c + 1:len(sentence) + 1]
-    return sentence
+    if c + 1 < len(sentence) and sentence[c] in '.)':  # проверка на скобку 
+        return sentence[c + 1:len(sentence) + 1]  # возвращает в случае ее наличия 
+    return sentence  # если скобка не найдена, то возвращает оригинальное предложение 
 
 
-def define_chapter(sentence):
-    c = 0
-    for i in sentence:
+def define_chapter(sentence):  # функция для определения главы, а не предложения 
+    for i in sentence:  # бежим по предложению и возвращаем истину, если имеются буквы, не попадающие под символы из римского алфавита, иначе возвращаем ложь 
         if i.isalpha() and i not in "IXVC":
             return True
     return False
 
 
-def has_letters(s):
-    for char in s:
+def has_letters(s):  # проверка на наличие символов в строке 
+    for char in s:  # бежим по строке и возвращаем тру если есть буква, иначе возвращаем ложь 
         if char.isalpha():
             return True
     return False
 
 
-def edit_sentence(s):
-    # result = re.split(r'[.!?^-]', s)
-    s = s.replace("?–", "–")
+def edit_sentence(s):  # функция для приведения абзаца в массив предложений 
+    s = s.replace("?–", "–")  # заменяю прямую речь так, чтобы она не разделяла одно предложение на разные 
     s = s.replace("!–", "–")
-    s = s.replace("?", "[]")
+    s = s.replace("?", "[]")  # эти замены для большей простоты определения, где разделить 
     s = s.replace("!", "[]")
     s = s.replace(".", "[]")
-    result = s.split("[]")
-    res = []
-    for sentence in result:
+    result = s.split("[]")  # само разделение 
+    res = []  # инициализация массива для массива отредактированных символов 
+    for sentence in result:  # бежим по разделенному абзацу и редактируем каждое предложение собственными функциями и проверяем специальные символы, удаляем лишние пробелы 
         sentence = remove_numbers_before_symbols(sentence)
         sentence = remove_before_parenthesis(sentence)
         for i in special_symbols_list:
@@ -88,76 +83,59 @@ def edit_sentence(s):
     return res
 
 
-def edit_strings_for_analyzing(lst):
-    result = []
+def edit_strings_for_analyzing(lst):  # функция для редактирования предложений под анализ 
+    result = []  # инициализация массива для отфильтрованных предложений по наличию спец символов, размеру, наличию букв (не глав)
     for i in lst:
         for j in special_characters:
             i = i.replace(j, "")
         if len(i) != 0 and has_letters(i) and define_chapter(i):
-            result.append(i)
+            result.append(i)  # в случае успеха добавляем в массив для отфильтрованных предложений 
     return result
 
 
-# Функции анализа текста
+# Функция анализа текста
 
-
-def define_medium_word_len(lst):
-    word_count = 0
-    letter_len = 0
-    for sentence in lst:
-        words = sentence.split()
-        for word in words:
-            word_count += 1
+def text_analyze5(lst, user_word):  # функция для подсета средней длины слова, общего количества слов, частоты встречи союзов, количества уникальных слов, выбранного пользователем слова  
+    word_count = 0  # счетчик слов 
+    letter_len = 0  # счетчик букв в словах
+    preposition_count = 0  # счетчик союзов 
+    
+    lst_of_words = []  # список для всех слов 
+    user_word = user_word.lower()  # выбранное пользоваталем слово, но маленькими символами 
+    set_of_words = set()  # множество для всех слов, потребуется для подсчета уникальных слов 
+    
+    for sentence in lst:  # в этом цикле мы проходимся по всем предложениям массивна и увеличиваем счетчики 
+        words = sentence.split()  # делим предложение на слова 
+        for word in words: #  проходимся по словам в предложении
+            word = word.strip().lower()  # приводим слово к общему виду для более простого анализа  
+            if word in unions:  # проверка на союз 
+                preposition_count += 1 
+            lst_of_words.append(word)  # добавляем слова в массив и множество, увеличиваем счетчик слов и букв  
+            set_of_words.add(word)
+            word_count += 1  
             letter_len += len(word)
-    return letter_len / word_count
-
-
-def define_count_of_words_and_frequency_of_union(lst):
-    word_count = 0
-    prepositions_count = 0
-    for sentence in lst:
-        words = sentence.split()
-        for word in words:
-            if word in unions:
-                prepositions_count += 1
-            word_count += 1
-    return word_count, word_count / prepositions_count / 100
-
-
-def define_count_of_unique_words_and_user_word_count(lst, user_word):
-    lst_of_words = []
-    user_word = user_word.lower()
-    set_of_words = set()
-    for sentences in lst:
-        words = sentences.split()
-        for word in words:
-            lst_of_words.append(word.strip().lower())
-            set_of_words.add(word.strip().lower())
-    uniquie_words = set()
-    for word in set_of_words:
+    unique_words = set()  # создание множества для итогового значения уникальных слов 
+    for word in set_of_words:  # определение количества уникальных слов через подсчет количества встречи каждого слова из множества в списке всех слов 
         if lst_of_words.count(word) == 1:
-            uniquie_words.add(word)
-    return len(uniquie_words), lst_of_words.count(user_word)
+            unique_words.add(word)
+    return word_count, letter_len/word_count, word_count/(preposition_count * 100), len(unique_words), lst_of_words.count(user_word)  # общее количество слов, средняя длина слова, частота встречи союзов, количество уникальных слов, сколько раз встретилось выбранное пользователем слово  
 
 
-def main(user_word):
-    f = open('70299175.txt').readlines()
-    lst_of_edited_sentences = []
-    for i in edit_strings_for_analyzing(f):
-        for sentence in edit_sentence(i):
-            if len(sentence) != 0:
-                lst_of_edited_sentences.append(sentence)
-    unique_word_count, user_word_count = define_count_of_unique_words_and_user_word_count(lst_of_edited_sentences,
-                                                                                          user_word)
-    count_of_words, frequency_of_union = define_count_of_words_and_frequency_of_union(lst_of_edited_sentences)
-    medium_word_len = define_medium_word_len(lst_of_edited_sentences)
-    with open('results.txt', 'w+') as result_file:
-        result_file.write(f"Количество уникальных слов в тексте: {unique_word_count}\n")
+def main(user_word):  # главная функция, считывающая файл и анализирующая его 
+    f = open('123.txt').readlines()  # считывание текста 
+    lst_of_edited_sentences = []  # создание массива для отредактированных предложений 
+    for i in edit_strings_for_analyzing(f): # проходимся по отредактированным предожениям 
+        for sentence in edit_sentence(i):  # редактируем каждое предложение, разбиваем абзацы на предложения  
+            if len(sentence) != 0:  # проверка на не пустое предложение 
+                lst_of_edited_sentences.append(sentence)  # добавляем отредактированные предложения в массив созданный под это 
+    word_count, medium_word_len, frequency_of_union, count_of_unique_words, user_word_count = text_analyze5(lst_of_edited_sentences, user_word)  # рассчитываем общее количество слов, среднюю длину слов, частоту встречи союзов, количества уникальных слов, количество встречи вабранного пользователем слова 
+    with open('results.txt', 'w+') as result_file:  # записываем в файл все значения 
+        result_file.write(f"Количество уникальных слов в тексте: {count_of_unique_words}\n")
         result_file.write(f"Выбранное пользователем слово встречается столько раз: {user_word_count}\n")
-        result_file.write(f"Общее количество слов в тексте: {count_of_words}\n")
+        result_file.write(f"Общее количество слов в тексте: {word_count}\n")
         result_file.write(f"Средняя длина слова: {medium_word_len}\n")
         result_file.write(f"Частота встречи союзов: {frequency_of_union}\n")
 
 
-user_word = str(input('Введите слово, которое хотели бы посчитать в тексте: '))
-main(user_word)
+user_word = str(input('Введите слово, которое хотели бы посчитать в тексте: '))  # спрашиваем у пользователя подсчитываемое слово в тексте 
+main(user_word)  # вызов главной функции, собственно делающей все 
